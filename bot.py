@@ -17,6 +17,7 @@ from database import (
     add_to_dizim, get_all_dizim,
     get_user_dizim, get_stats, delete_dizim
 )
+from keep_alive import keep_alive
 
 # ===================== .ENV YUKLASH =====================
 load_dotenv()
@@ -253,6 +254,7 @@ async def my_records(msg: types.Message):
 # ─────────────── Botni ishga tushirish ───────────────
 async def main():
     create_tables()
+    keep_alive()  # Serverni ishga tushiramiz
     logger.info("🤖 Bot ishlamoqda...")
     await dp.start_polling(bot)
 
