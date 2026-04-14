@@ -1,0 +1,32 @@
+# ====== Python ======
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# ====== Maxfiy fayllar ======
+.env
+*.env
+
+# ====== Virtual Environment ======
+venv/
+env/
+.venv/
+ENV/
+
+# ====== IDE fayllar ======
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ====== OS fayllar ======
+.DS_Store
+Thumbs.db
+
+# ====== Log fayllar ======
+*.log
+logs/
+
+# ====== Test ======
+.pytest_cache/
