@@ -49,12 +49,16 @@ def create_tables():
         CREATE TABLE IF NOT EXISTS dizim (
             id          SERIAL PRIMARY KEY,
             telegram_id BIGINT NOT NULL,
+            telegram_link VARCHAR(255),
             ism         VARCHAR(100),
             familiya    VARCHAR(100),
             telefon     VARCHAR(20),
             izoh        TEXT,
             qoshilgan   TIMESTAMP DEFAULT NOW()
         );
+        
+        -- Agar jadval avval tuzilgan bo'lsa, telegram_link ustunini qo'shamiz
+        ALTER TABLE dizim ADD COLUMN IF NOT EXISTS telegram_link VARCHAR(255);
     """)
     conn.commit()
     cur.close()
@@ -89,15 +93,15 @@ def save_message(telegram_id: int, content: str):
     conn.close()
 
 
-def add_to_dizim(telegram_id: int, ism: str, familiya: str, telefon: str, izoh: str = ""):
+def add_to_dizim(telegram_id: int, telegram_link: str, ism: str, familiya: str, telefon: str, izoh: str = ""):
     """Dizimga yangi yozuv qo'shish"""
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
-        INSERT INTO dizim (telegram_id, ism, familiya, telefon, izoh)
-        VALUES (%s, %s, %s, %s, %s)
+        INSERT INTO dizim (telegram_id, telegram_link, ism, familiya, telefon, izoh)
+        VALUES (%s, %s, %s, %s, %s, %s)
         RETURNING id;
-    """, (telegram_id, ism, familiya, telefon, izoh))
+    """, (telegram_id, telegram_link, ism, familiya, telefon, izoh))
     new_id = cur.fetchone()[0]
     conn.commit()
     cur.close()
@@ -110,7 +114,7 @@ def get_all_dizim():
     conn = get_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute("""
-        SELECT d.id, d.ism, d.familiya, d.telefon, d.izoh,
+        SELECT d.id, d.ism, d.familiya, d.telefon, d.izoh, d.telegram_link,
                u.username, d.qoshilgan
         FROM dizim d
         LEFT JOIN users u ON u.telegram_id = d.telegram_id

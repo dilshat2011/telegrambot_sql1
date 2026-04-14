@@ -87,7 +87,8 @@ def cancel_keyboard():
 
 # ─────────────── /start Buyrug'i ───────────────
 @dp.message(CommandStart())
-async def cmd_start(msg: types.Message):
+async def cmd_start(msg: types.Message, state: FSMContext):
+    await state.clear()
     user = msg.from_user
     save_user(user.id, user.username or "", user.full_name)
 
@@ -144,10 +145,11 @@ async def admin_all_list(msg: types.Message):
     text = f"📋 <b>Barcha yozuvlar ({len(rows)} ta):</b>\n\n"
     for r in rows:
         uname = r['username'] if r['username'] else "noma'lum"
+        link_str = f"🔗 <a href='{r['telegram_link']}'>Profilga o'tish</a>" if r.get('telegram_link') else f"🔗 @{uname}"
         vaqt  = r['qoshilgan'].strftime('%d.%m.%Y %H:%M')
         text += (
             f"🆔 {r['id']} | <b>{r['ism']} {r['familiya']}</b>\n"
-            f"📞 {r['telefon']} | @{uname}\n"
+            f"📞 {r['telefon']} | {link_str}\n"
             f"🕐 {vaqt}\n\n"
         )
     await msg.answer(text, parse_mode="HTML")
@@ -185,6 +187,7 @@ async def process_delete(callback: CallbackQuery, state: FSMContext):
 # ─────────────── Dizimga qo'shish ───────────────
 @dp.message(F.text == "📝 Dizimga qo'shish")
 async def start_dizim(msg: types.Message, state: FSMContext):
+    await state.clear()
     await state.set_state(DizimState.ism)
     await msg.answer("1️⃣ Ismingizni kiriting:", reply_markup=cancel_keyboard())
 
@@ -214,14 +217,22 @@ async def get_telefon(msg: types.Message, state: FSMContext):
 async def get_izoh(msg: types.Message, state: FSMContext):
     izoh = "" if msg.text == "-" else msg.text
     data = await state.get_data()
-    new_id = add_to_dizim(msg.from_user.id, data['ism'], data['familiya'], data['telefon'], izoh)
+    
+    # Telegram linkni yaratish
+    if msg.from_user.username:
+        telegram_link = f"https://t.me/{msg.from_user.username}"
+    else:
+        telegram_link = f"tg://openmessage?user_id={msg.from_user.id}"
+        
+    new_id = add_to_dizim(msg.from_user.id, telegram_link, data['ism'], data['familiya'], data['telefon'], izoh)
     await state.clear()
-    await msg.answer(f"✅ Saqlandi! ID: {new_id}", reply_markup=main_keyboard())
+    await msg.answer(f"✅ Saqlandi! Sizning ma'lumotlaringiz bazaga, linkingiz bilan birga yozildi. ID: {new_id}", reply_markup=main_keyboard())
 
 
 # ─────────────── Statistika ───────────────
 @dp.message(F.text == "📊 Statistika")
-async def show_stats(msg: types.Message):
+async def show_stats(msg: types.Message, state: FSMContext):
+    await state.clear()
     users_count, dizim_count, msg_count = get_stats()
     await msg.answer(
         f"📊 <b>Statistika:</b>\n\n"
@@ -234,7 +245,8 @@ async def show_stats(msg: types.Message):
 
 # ─────────────── Mening yozuvlarim ───────────────
 @dp.message(F.text == "📋 Mening yozuvlarim")
-async def my_records(msg: types.Message):
+async def my_records(msg: types.Message, state: FSMContext):
+    await state.clear()
     rows = get_user_dizim(msg.from_user.id)
     if not rows:
         await msg.answer("📭 Sizda hali yozuv yo'q.")
